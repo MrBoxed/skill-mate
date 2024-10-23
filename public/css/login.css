@@ -1,0 +1,90 @@
+body {
+    align-content: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+#icon {
+    border-radius: 50%;
+    height: 100px;
+    width: 100px;
+    margin: 5px;
+}
+
+h1 {
+    position: relative;
+    text-align: center;
+    font-family: sans-serif;
+    font-size: 24px;
+    padding: 15px;
+}
+
+.Form {
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    ;
+    text-align: center;
+    border: 0.5px solid grey;
+    border-radius: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    padding: 15px;
+    box-shadow: 10px 15px 20px rgba(165, 164, 164, 0.486);
+    width: 300px;
+    background: linear-gradient(0deg, #bc34cf, #5f5be3);
+}
+
+#input_text {
+    color: white;
+    padding: 5px;
+    margin: 10px;
+    width: 100%;
+    outline: none;
+    border: 0px;
+    border-bottom: 1px solid rgb(255, 255, 255);
+    background: transparent;
+    position: relative;
+    right: 10px;
+}
+
+
+#password {
+    color: white;
+    padding: 5px;
+    margin: 10px;
+    outline: none;
+    border: 0px;
+    border-bottom: 1px solid rgb(255, 255, 255);
+    background: transparent;
+    width: 100%;
+    position: relative;
+    right: 10px;
+
+}
+
+.element {
+    text-align: left;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+button {
+    color: black;
+    margin: 15px;
+    padding: 10px 25px 10px 25px;
+    border-radius: 50px;
+    border: 0px;
+    appearance: none;
+}
+
+#link {
+    color: white;
+}
+
+::placeholder {
+    color: white;
+}
+
+button:hover {
+    background-color: violet;
+}
