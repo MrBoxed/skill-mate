@@ -11,6 +11,11 @@ homeRouter.use('/user', userRouter);
 // Course route
 homeRouter.use('/course', courseRouter);
 
+
+
+
+
+
 //   :::::: TEST :::::::  //
 //  TO BE REMOVED
 homeRouter.get('/', (req, res) => {

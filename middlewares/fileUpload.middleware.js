@@ -74,6 +74,7 @@ const CreateThumbnail = (req, res, next) => {
     }
     catch (e) {
         console.log("Create thumbnail Failed.");
+        next();
     }
 
 }

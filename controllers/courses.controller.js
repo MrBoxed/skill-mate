@@ -2,6 +2,7 @@ const fs = require('fs')
 const { CourseDetail, BasicCourse } = require("../models/course.model");
 const { getVideoDurationInSeconds } = require('get-video-duration')
 
+// function for getting all list of the course
 async function GetAllCourses(req, res) {
 
     try {
@@ -31,6 +32,7 @@ async function GetAllCourses(req, res) {
     }
 }
 
+// function for getting a single course from database 
 async function GetCourseById(req, res) {
 
     try {
@@ -40,7 +42,7 @@ async function GetCourseById(req, res) {
         if (!result) {
             return res.status(500).json({
                 success: false,
-                message: "Internal Server Error"
+                message: "Could not found the course"
             });
         }
 
@@ -61,13 +63,15 @@ async function GetCourseById(req, res) {
     }
 }
 
+// function to update course details 
 async function UpdateCourseByPatch(req, res) {
+
     try {
 
-        const result = await CourseDetail.findByIdAndUpdate(req.params.id, req.body);
+        const result = await BasicCourse.findByIdAndUpdate(req.params.id, req.body);
 
         if (!result) {
-            return res.status(400).json({ error: 'Didnot found the item' });
+            return res.status(400).json({ error: 'Did not found the item' });
         }
         else {
 
@@ -97,6 +101,7 @@ async function StreamVideo(req, res) {
             success: false,
             message: "range header not found",
         });
+        console.log('Access without range-header: Denied');
         return;
     }
 
@@ -216,11 +221,189 @@ async function UploadCourse(req, res) {
     }
 }
 
+// FOR COURSE HOME PAGE:
+// #####################################
+// Finding the courses from the database with respect to the provided array category
+// ###################################
+const getCoursesByCategoryCaseInsensitive = async (categoryName) => {
+    // Fetch courses based on the category (case-insensitive) and limit to 5
+    const courses = await BasicCourse.find({
+        category: { $regex: new RegExp(`^${categoryName}$`, 'i') }
+    }).limit(5);
+    return courses;
+};
+
+// #####################################
+// Function to build the tabs structure
+// ##################################
+const buildTabsWithCourses = async (categories) => {
+    const tabs = [];
+
+    for (let categoryName of categories) {
+        const courses = await getCoursesByCategoryCaseInsensitive(categoryName);
+        tabs.push({
+            category: categoryName,
+            courses: courses
+        });
+    }
+
+    return tabs;
+};
+
+//  providing the tabs with course details
+const HomeTabDetails = async (req, res) => {
+
+    const categories = ['Technology', 'Business', 'Art', 'Health']
+
+    try {
+
+        const tabsData = await buildTabsWithCourses(categories);
+
+        if (!tabsData) {
+            return res.status(400).json({
+                success: false,
+                error: 'Courses tabs data: null'
+            });
+        }
+
+        else {
+
+            res.status(200).json({
+                success: true,
+                message: tabsData,
+            });
+        }
+
+    } catch (e) {
+        console.log(error);
+        res.status(500).json({
+            status: 'failure',
+            message: 'Internal Server Error '
+        });
+    }
+
+}
+
+// Fetching random coures
+// TODO FIND TOP OR RANDOM
+const FeaturedCourses = async (req, res) => {
+
+    try {
+
+        const randomCourses = await BasicCourse.aggregate([
+            { $sample: { size: 6 } } // Randomly select 6 courses
+        ]);
+
+        if (!randomCourses) {
+            return res.status(400).json({
+                success: false,
+                error: 'No Data present'
+            });
+        }
+
+        else {
+            res.status(200).json({
+                success: true,
+                message: randomCourses,
+            });
+        }
+
+    } catch (e) {
+        console.log(error);
+        res.status(500).json({
+            status: 'failure',
+            message: 'Internal Server Error '
+        });
+    }
+}
+
+// COURSE SEARCH API
+const SearchCourse = async (req, res) => {
+
+    const { query, category, limit = 10 } = req.query;
+
+    try {
+        // Build the search conditions dynamically
+        let searchConditions = {};
+
+        if (query) {
+            searchConditions = {
+                $or: [
+                    { title: { $regex: query, $options: 'i' } }, // Case-insensitive search on title
+                    { description: { $regex: query, $options: 'i' } }, // Case-insensitive search on description
+                ]
+            };
+        }
+
+        if (category) {
+            searchConditions.category = { $regex: category, $options: 'i' }; // Case-insensitive search on category
+        }
+
+        // Perform the search query
+        const courses = await BasicCourse.find(searchConditions)
+            .limit(parseInt(limit)) // Limit the number of results
+            .exec();
+
+        // Send the result
+        res.status(200).json({
+            success: true,
+            message: courses
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error fetching courses' });
+    }
+}
+
+// FOR ENROLLING THE USER
+// TODO 
+const EnrollStudent = async (req, res) => {
+
+    const { user_id, course_id } = req.body;
+
+    if (!user_id || !course_id) {
+
+        return res.status(400).json({
+            success: false,
+            message: "IDs no provided"
+        });
+    }
+
+    try {
+
+        const enrollment = new Enrollment({ user_id, course_id });
+
+        const result = await enrollment.save();
+
+        if (!result) {
+            return res.status(500).json({
+                success: false,
+                message: "Internal Server Error"
+            });
+        }
+
+        else {
+
+            res.status(200).json({
+                success: true,
+                message: 'User enrolled successfully'
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ message: 'Error enrolling user', error: err });
+    }
+
+}
 
 module.exports = {
     UploadCourse,
     GetAllCourses,
     GetCourseById,
     UpdateCourseByPatch,
-    StreamVideo
+    StreamVideo,
+    HomeTabDetails,
+    FeaturedCourses,
+    SearchCourse,
+    EnrollStudent
 }

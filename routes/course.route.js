@@ -3,9 +3,9 @@ const express = require('express');
 const courseRouter = express.Router();
 const multerUpload = require('../middlewares/fileUpload.middleware.js');
 
-const { CourseDetail } = require('../models/course.model');
+const { CourseDetail, BasicCourse } = require('../models/course.model');
 
-const { GetAllCourses, AddCourse, GetCourseById, UpdateCourseByPatch, StreamVideo, UploadCourse } = require('../controllers/courses.controller.js');
+const { GetAllCourses, AddCourse, GetCourseById, UpdateCourseByPatch, StreamVideo, UploadCourse, HomeTabDetails, FeaturedCourses, SearchCourse, EnrollStudent } = require('../controllers/courses.controller.js');
 
 
 // ############################################################ //
@@ -34,27 +34,6 @@ courseRouter.get('/upload', (req, res) => {
 
 
 
-// get all the courses
-courseRouter.get('/all', GetAllCourses);
-
-// get a particular course
-courseRouter.get('/info/:videoId', GetCourseById);
-
-
-// deleting a course 
-courseRouter.delete('/remove/:id', (req, res) => {
-    // To do find the course by id and delete
-});
-
-
-// updating a course info 
-courseRouter.patch('/:id', UpdateCourseByPatch)
-
-// STREAMING VIDEO
-// for watching the video of the course
-courseRouter.get('/watch/:videoId', StreamVideo);
-
-
 // CREATING COURSE:
 //      will upload course to the server
 courseRouter.post(
@@ -63,5 +42,38 @@ courseRouter.post(
     multerUpload.CreateThumbnail,
     UploadCourse
 );
+
+// COURSE FOR HOMEPAGE:
+// providing array of category with course data
+courseRouter.get('/tabs', HomeTabDetails);
+
+// providing small array of courese
+courseRouter.get('/featured', FeaturedCourses)
+
+// get all the courses
+courseRouter.get('/all', GetAllCourses);
+
+// get a particular course
+courseRouter.get('/info/:videoId', GetCourseById);
+
+// DELETE COURSE
+// deleting a course 
+courseRouter.delete('/remove/:id', (req, res) => {
+    // To do find the course by id and delete
+});
+
+// UPDATING COURSE DETAILS
+// updating a course info 
+courseRouter.patch('/:id', UpdateCourseByPatch)
+
+// STREAMING VIDEO
+// for watching the video of the course
+courseRouter.get('/watch/:videoId', StreamVideo);
+
+// SEARCH FEATURE
+courseRouter.get('/search', SearchCourse)
+
+// ENROLLMENT // FOR LATER 
+courseRouter.post('/enrollment', EnrollStudent)
 
 module.exports = courseRouter;
