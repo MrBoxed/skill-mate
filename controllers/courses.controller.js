@@ -1,6 +1,10 @@
 const fs = require('fs')
+const { getVideoDurationInSeconds } = require('get-video-duration');
 const { CourseDetail, BasicCourse } = require("../models/course.model");
-const { getVideoDurationInSeconds } = require('get-video-duration')
+const { Enrollment } = require('../models/enrollement.model');
+const { default: mongoose } = require('mongoose');
+const { Review } = require('../models/review.model');
+const User = require('../models/user.model');
 
 // function for getting all list of the course
 async function GetAllCourses(req, res) {
@@ -37,7 +41,16 @@ async function GetCourseById(req, res) {
 
     try {
 
-        let result = await BasicCourse.findById(req.params.videoId);
+        if (!mongoose.Types.ObjectId.isValid(req.params.courseId)) {
+            return res.status(400).json({
+                success: false,
+                messsage: "bad course id"
+            });
+        }
+
+        const result = await BasicCourse.findById(req.params.courseId);
+
+        const reviewMsg = await GetAllReviewOfCourse(req.params.courseId);
 
         if (!result) {
             return res.status(500).json({
@@ -50,7 +63,8 @@ async function GetCourseById(req, res) {
 
             res.status(200).json({
                 status: "success",
-                message: result
+                message: result,
+                reviews: reviewMsg
             });
         }
 
@@ -360,21 +374,52 @@ const SearchCourse = async (req, res) => {
 // TODO 
 const EnrollStudent = async (req, res) => {
 
-    const { user_id, course_id } = req.body;
-
-    if (!user_id || !course_id) {
-
-        return res.status(400).json({
-            success: false,
-            message: "IDs no provided"
-        });
-    }
+    const { userId } = req.user;
+    const courseId = req.params.courseId;
+    const todayDate = new Date().getDate();
 
     try {
 
-        const enrollment = new Enrollment({ user_id, course_id });
+        if (req.user === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "user not found"
+            });
+        }
 
-        const result = await enrollment.save();
+        if (!mongoose.Types.ObjectId.isValid(courseId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid course ID !"
+            });
+        }
+
+        // Finding the course if exists 
+        const course = await BasicCourse.findById(courseId);
+        course.enrolledNumber += 1;
+
+        await course.save();
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: "course not found!"
+            });
+        }
+
+        const courseEnrollment = new Enrollment({
+            student: userId,
+            course: courseId,
+            enrolledAt: todayDate,
+            completed: false
+        })
+
+        // return res.status(201).json({
+        //     success: true,
+        //     data: courseEnrollment
+        // })
+
+        const result = await courseEnrollment.save();
 
         if (!result) {
             return res.status(500).json({
@@ -385,15 +430,74 @@ const EnrollStudent = async (req, res) => {
 
         else {
 
-            res.status(200).json({
+            res.status(201).json({
                 success: true,
                 message: 'User enrolled successfully'
             });
         }
     } catch (err) {
-        res.status(500).json({ message: 'Error enrolling user', error: err });
+        res.status(500).json({ message: 'Internal server error at enrolling user', error: err });
     }
 
+}
+
+
+// COURSE REVIEWS
+const CourseReview = async (req, res) => {
+
+    const { userId } = req.user;
+    const courseId = req.body.courseId;
+    const rating = req.body.rating;
+    const courseReviewMsg = req.body.comment;
+
+    try {
+        if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(courseId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid ID !"
+            });
+        }
+
+        const course = await BasicCourse.findById(courseId);
+        const userdata = await User.findById(userId);
+
+        if (!course || !userdata) {
+            return res.status(404).json({
+                success: false,
+                message: "Data not found!"
+            });
+        }
+
+        const review = new Review({
+            course: courseId,
+            student: userId,
+            rating: rating,
+            comment: courseReviewMsg,
+        });
+
+        const savedData = await review.save();
+
+        res.status(201).json({
+            success: true,
+            data: savedData
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500)
+            .json({
+                success: false,
+                message: "Internal Server Error"
+            });
+    }
+}
+
+// returning all reviews for the particular courseId
+async function GetAllReviewOfCourse(courseId) {
+
+    const reviewMsg = await Review.find({ course: new mongoose.Types.ObjectId(courseId) }).select('comment');
+
+    return reviewMsg;
 }
 
 module.exports = {
@@ -405,5 +509,6 @@ module.exports = {
     HomeTabDetails,
     FeaturedCourses,
     SearchCourse,
-    EnrollStudent
+    EnrollStudent,
+    CourseReview
 }

@@ -2,11 +2,13 @@ const jwt = require('jsonwebtoken');
 
 const ensureAutenticated = (req, res, next) => {
 
-    const auth = req.header['authorization'];
+    const authHeader = req.headers['authorization'];
+    const auth = authHeader && authHeader.split(' ')[1]; // Get token from "Bearer <token>"
+
     if (!auth) {
-        return res.status(403)
+        return res.status(401)
             .json({
-                message: 'Unauthorized, JWT token is require'
+                message: 'Unauthorized, JWT token is required'
             });
     }
 
@@ -18,7 +20,7 @@ const ensureAutenticated = (req, res, next) => {
     catch (err) {
         return res.status(403)
             .json({
-                message: 'Unauthorized, JWT token is require'
+                message: err.message
             });
     }
 }

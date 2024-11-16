@@ -5,7 +5,8 @@ const multerUpload = require('../middlewares/fileUpload.middleware.js');
 
 const { CourseDetail, BasicCourse } = require('../models/course.model');
 
-const { GetAllCourses, AddCourse, GetCourseById, UpdateCourseByPatch, StreamVideo, UploadCourse, HomeTabDetails, FeaturedCourses, SearchCourse, EnrollStudent } = require('../controllers/courses.controller.js');
+const { GetAllCourses, AddCourse, GetCourseById, UpdateCourseByPatch, StreamVideo, UploadCourse, HomeTabDetails, FeaturedCourses, SearchCourse, EnrollStudent, CourseReview } = require('../controllers/courses.controller.js');
+const ensureAutenticated = require('../middlewares/auth.js');
 
 
 // ############################################################ //
@@ -54,12 +55,14 @@ courseRouter.get('/featured', FeaturedCourses)
 courseRouter.get('/all', GetAllCourses);
 
 // get a particular course
-courseRouter.get('/info/:videoId', GetCourseById);
+courseRouter.get('/info/:courseId', GetCourseById);
 
 // DELETE COURSE
 // deleting a course 
-courseRouter.delete('/remove/:id', (req, res) => {
+courseRouter.delete('/remove/:id', ensureAutenticated, (req, res) => {
     // To do find the course by id and delete
+
+    console.log('USER_INFO: ' + req.user);
 });
 
 // UPDATING COURSE DETAILS
@@ -68,12 +71,15 @@ courseRouter.patch('/:id', UpdateCourseByPatch)
 
 // STREAMING VIDEO
 // for watching the video of the course
-courseRouter.get('/watch/:videoId', StreamVideo);
+courseRouter.get('/watch/:videoId', ensureAutenticated, StreamVideo);
 
 // SEARCH FEATURE
 courseRouter.get('/search', SearchCourse)
 
 // ENROLLMENT // FOR LATER 
-courseRouter.post('/enrollment', EnrollStudent)
+courseRouter.get('/enrollment/:courseId', ensureAutenticated, EnrollStudent)
+
+// FOR REVIEW
+courseRouter.get('/review', ensureAutenticated, CourseReview)
 
 module.exports = courseRouter;

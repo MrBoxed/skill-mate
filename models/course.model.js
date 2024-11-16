@@ -109,6 +109,7 @@ const basicCourse = new mongoose.Schema({
         required: true
     },
 
+    // TODO: add link to userId for instructor
     instructor: {
         type: String,
         required: true
